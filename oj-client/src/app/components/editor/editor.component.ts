@@ -14,13 +14,13 @@ export class EditorComponent implements OnInit {
   editor: any;
 
   defaultContent = {
-    'Java': `public class Solution {
-      public static void main(String[] args){
+      'Java': ` public class Solution {
+        public static void main(String[] args){
 
-      }
-    }`,
-    'Python': `class Solution:
-    def example():`
+        }
+      }`,
+      'Python': `class Solution:
+      def example():`
   };
 
   constructor() { }

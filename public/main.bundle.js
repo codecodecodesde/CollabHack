@@ -95,6 +95,7 @@ var data_service_1 = __webpack_require__("../../../../../src/app/services/data.s
 var problem_detail_component_1 = __webpack_require__("../../../../../src/app/components/problem-detail/problem-detail.component.ts");
 var app_routes_1 = __webpack_require__("../../../../../src/app/app.routes.ts");
 var new_problem_component_1 = __webpack_require__("../../../../../src/app/components/new-problem/new-problem.component.ts");
+var editor_component_1 = __webpack_require__("../../../../../src/app/components/editor/editor.component.ts");
 var AppModule = /** @class */ (function () {
     function AppModule() {
     }
@@ -104,7 +105,8 @@ var AppModule = /** @class */ (function () {
                 app_component_1.AppComponent,
                 problem_list_component_1.ProblemListComponent,
                 problem_detail_component_1.ProblemDetailComponent,
-                new_problem_component_1.NewProblemComponent
+                new_problem_component_1.NewProblemComponent,
+                editor_component_1.EditorComponent
             ],
             imports: [
                 platform_browser_1.BrowserModule,
@@ -154,6 +156,90 @@ var routes = [
     }
 ];
 exports.routing = router_1.RouterModule.forRoot(routes);
+
+
+/***/ }),
+
+/***/ "../../../../../src/app/components/editor/editor.component.css":
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__("../../../../css-loader/lib/css-base.js")(false);
+// imports
+
+
+// module
+exports.push([module.i, "@media screen {\n  #editor {\n    height: 600px;\n  }\n  .lang-select {\n    width: 100px;\n    margin-right: 10px;\n  }\n  header .btn {\n    margin: 0 5px;\n  }\n  footer .btn {\n    margin: 0 5px;\n  }\n  .editor-footer, .editor-header {\n    margin: 10px 0;\n  }\n  .cursor {\n    /*position:absolute;*/\n    background: rgba(0, 250, 0, 0.5);\n    z-index: 40;\n    width: 2px !important;\n  }\n}\n", ""]);
+
+// exports
+
+
+/*** EXPORTS FROM exports-loader ***/
+module.exports = module.exports.toString();
+
+/***/ }),
+
+/***/ "../../../../../src/app/components/editor/editor.component.html":
+/***/ (function(module, exports) {
+
+module.exports = "<section>\n  <header class=\"editor-header\">\n    <select class=\"form-control pull-left lang-select\" name=\"language\"\n     [(ngModel)]=\"language\" (change)=\"setLanguage(language)\">\n     <option *ngFor=\"let language of languages\" [value]=\"language\">\n       {{language}}\n     </option>\n    </select>\n    <!--reset button -->\n    <!-- Button trigger modal -->\n    <button type=\"button\" class=\"btn btn-primary\" data-toggle=\"modal\" data-target=\"#myModal\">\n      Reset\n    </button>\n\n    <!-- Modal -->\n    <div class=\"modal fade\" id=\"myModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"exampleModalLabel\" aria-hidden=\"true\">\n      <div class=\"modal-dialog\" role=\"document\">\n        <div class=\"modal-content\">\n          <div class=\"modal-header\">\n            <h5 class=\"modal-title\" id=\"exampleModalLabel\">Are you sure</h5>\n            <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\">\n              <span aria-hidden=\"true\">&times;</span>\n            </button>\n          </div>\n          <div class=\"modal-body\">\n            You will lose current code in the editor, are you sure?\n          </div>\n          <div class=\"modal-footer\">\n            <button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Cancel</button>\n            <button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\"\n            (click)=\"resetEditor()\">Reset</button>\n          </div>\n        </div>\n      </div>\n    </div>\n  </header>\n  <div class=\"row\">\n    <div id=\"editor\">\n    </div>\n  </div><!-- This is the body -->\n  <footer class=\"editor-footer\">\n      <button type=\"button\" class=\"btn btn-success pull-right\"\n      (click)=\"submit()\">Submit Solution</button>\n  </footer>\n</section>\n"
+
+/***/ }),
+
+/***/ "../../../../../src/app/components/editor/editor.component.ts":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var core_1 = __webpack_require__("../../../core/esm5/core.js");
+var EditorComponent = /** @class */ (function () {
+    function EditorComponent() {
+        this.languages = ['Java', 'Python'];
+        this.language = 'Java';
+        this.defaultContent = {
+            'Java': " public class Solution {\n        public static void main(String[] args){\n\n        }\n      }",
+            'Python': "class Solution:\n      def example():"
+        };
+    }
+    EditorComponent.prototype.ngOnInit = function () {
+        this.editor = ace.edit("editor");
+        this.editor.setTheme("ace/theme/eclipse");
+        this.resetEditor();
+    };
+    //reset editor
+    EditorComponent.prototype.resetEditor = function () {
+        this.editor.setValue(this.defaultContent[this.language]);
+        this.editor.getSession().setMode("ace/mode/" + this.language.toLowerCase());
+    };
+    //set languages
+    EditorComponent.prototype.setLanguage = function (language) {
+        this.language = language;
+        this.resetEditor();
+    };
+    EditorComponent.prototype.submit = function () {
+        var user_code = this.editor.getValue();
+        console.log(user_code);
+    };
+    EditorComponent = __decorate([
+        core_1.Component({
+            selector: 'app-editor',
+            template: __webpack_require__("../../../../../src/app/components/editor/editor.component.html"),
+            styles: [__webpack_require__("../../../../../src/app/components/editor/editor.component.css")]
+        }),
+        __metadata("design:paramtypes", [])
+    ], EditorComponent);
+    return EditorComponent;
+}());
+exports.EditorComponent = EditorComponent;
 
 
 /***/ }),
@@ -254,7 +340,7 @@ module.exports = module.exports.toString();
 /***/ "../../../../../src/app/components/problem-detail/problem-detail.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"container\" *ngIf=\"problem\">\n  <div class=\"col-sm-12 col-md-4\">\n    <div>\n      <h2>{{ problem.id }}. {{ problem.name }}</h2>\n      <p>{{ problem.desc }}</p>\n    </div>\n  </div>\n  <div class=\"hidden-xs col-sm-12 col-md-8\">  \n  </div>\n</div>\n"
+module.exports = "<div class=\"container\" *ngIf=\"problem\">\n  <div class=\"col-sm-12 col-md-4\">\n    <div>\n      <h2>{{ problem.id }}. {{ problem.name }}</h2>\n      <p>{{ problem.desc }}</p>\n    </div>\n  </div>\n  <div class=\"hidden-xs col-sm-12 col-md-8\">\n    <app-editor></app-editor>  \n  </div>\n</div>\n"
 
 /***/ }),
 
