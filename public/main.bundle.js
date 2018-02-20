@@ -96,6 +96,7 @@ var problem_detail_component_1 = __webpack_require__("../../../../../src/app/com
 var app_routes_1 = __webpack_require__("../../../../../src/app/app.routes.ts");
 var new_problem_component_1 = __webpack_require__("../../../../../src/app/components/new-problem/new-problem.component.ts");
 var editor_component_1 = __webpack_require__("../../../../../src/app/components/editor/editor.component.ts");
+var collaboration_service_1 = __webpack_require__("../../../../../src/app/services/collaboration.service.ts");
 var AppModule = /** @class */ (function () {
     function AppModule() {
     }
@@ -115,7 +116,8 @@ var AppModule = /** @class */ (function () {
                 http_1.HttpClientModule
             ],
             providers: [
-                data_service_1.DataService
+                data_service_1.DataService,
+                collaboration_service_1.CollaborationService
             ],
             bootstrap: [app_component_1.AppComponent]
         })
@@ -201,8 +203,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var core_1 = __webpack_require__("../../../core/esm5/core.js");
+var collaboration_service_1 = __webpack_require__("../../../../../src/app/services/collaboration.service.ts");
+var router_1 = __webpack_require__("../../../router/esm5/router.js");
 var EditorComponent = /** @class */ (function () {
-    function EditorComponent() {
+    function EditorComponent(collaboration, route) {
+        this.collaboration = collaboration;
+        this.route = route;
         this.languages = ['Java', 'Python'];
         this.language = 'Java';
         this.defaultContent = {
@@ -211,9 +217,28 @@ var EditorComponent = /** @class */ (function () {
         };
     }
     EditorComponent.prototype.ngOnInit = function () {
+        var _this = this;
+        this.route.params
+            .subscribe(function (params) {
+            _this.sessionId = params['id'];
+            _this.initEditor();
+        });
+    };
+    EditorComponent.prototype.initEditor = function () {
+        var _this = this;
         this.editor = ace.edit("editor");
         this.editor.setTheme("ace/theme/eclipse");
         this.resetEditor();
+        //set up collaboration socket
+        this.collaboration.init(this.editor, this.sessionId);
+        this.editor.lastAppliedChange = null;
+        //register change callback
+        this.editor.on("change", function (e) {
+            console.log('editor change: ' + JSON.stringify(e));
+            if (_this.editor.lastAppliedChange != e) {
+                _this.collaboration.change(JSON.stringify(e));
+            }
+        });
     };
     //reset editor
     EditorComponent.prototype.resetEditor = function () {
@@ -235,7 +260,8 @@ var EditorComponent = /** @class */ (function () {
             template: __webpack_require__("../../../../../src/app/components/editor/editor.component.html"),
             styles: [__webpack_require__("../../../../../src/app/components/editor/editor.component.css")]
         }),
-        __metadata("design:paramtypes", [])
+        __metadata("design:paramtypes", [collaboration_service_1.CollaborationService,
+            router_1.ActivatedRoute])
     ], EditorComponent);
     return EditorComponent;
 }());
@@ -457,6 +483,52 @@ var ProblemListComponent = /** @class */ (function () {
     return ProblemListComponent;
 }());
 exports.ProblemListComponent = ProblemListComponent;
+
+
+/***/ }),
+
+/***/ "../../../../../src/app/services/collaboration.service.ts":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var core_1 = __webpack_require__("../../../core/esm5/core.js");
+var CollaborationService = /** @class */ (function () {
+    function CollaborationService() {
+    }
+    CollaborationService.prototype.init = function (editor, sessionId) {
+        this.collaborationSocket = io(window.location.origin, { query: 'sessionId=' + sessionId });
+        // this.collaborationSocket.on("message", (message) => {
+        //   console.log('message received from the server:' + message);
+        // });
+        this.collaborationSocket.on("change", function (delta) {
+            console.log('collabration: editor changes by ' + delta);
+            delta = JSON.parse(delta);
+            editor.lastAppliedChange = delta;
+            editor.getSession().getDocument().applyDeltas([delta]);
+        });
+    };
+    // emit event to make changes and inform server and other collaborators
+    CollaborationService.prototype.change = function (delta) {
+        this.collaborationSocket.emit("change", delta);
+    };
+    CollaborationService = __decorate([
+        core_1.Injectable(),
+        __metadata("design:paramtypes", [])
+    ], CollaborationService);
+    return CollaborationService;
+}());
+exports.CollaborationService = CollaborationService;
 
 
 /***/ }),
