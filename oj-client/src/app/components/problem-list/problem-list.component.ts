@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Problem } from '../../models/problem.model';
 import { DataService } from '../../services/data.service';
 import { Subscription } from 'rxjs/Subscription';
+import { InputService } from '../../services/input.service';
 
 @Component({
   selector: 'app-problem-list',
@@ -11,10 +12,15 @@ import { Subscription } from 'rxjs/Subscription';
 export class ProblemListComponent implements OnInit {
   problems: Problem[];
   subscriptionProblems: Subscription;
-  constructor(private dataService: DataService) { }
+
+  searchTerm: string = '';
+  subscriptionInput: Subscription;
+  
+  constructor(private dataService: DataService, private inputService: InputService) { }
 
   ngOnInit() {//init problems in component by const problems outside
     this.getProblems();
+    this.getSearchTerm();
   }
 
   ngOnDestroy(){
@@ -23,6 +29,13 @@ export class ProblemListComponent implements OnInit {
   getProblems(){
     this.subscriptionProblems = this.dataService.getProblems()
     .subscribe(problems => this.problems = problems);
+  }
+
+  getSearchTerm(): void {
+    this.subscriptionInput = this.inputService.getInput()
+                                .subscribe(
+                                  inputTerm => this.searchTerm = inputTerm
+                                );
   }
 
 }

@@ -25,7 +25,8 @@ import { SearchPipe } from './pipes/search.pipe';
     ProblemDetailComponent,
     NewProblemComponent,
     EditorComponent,
-    NavbarComponent
+    NavbarComponent,
+    SearchPipe
   ],
   imports: [
     BrowserModule,

@@ -99,6 +99,7 @@ var editor_component_1 = __webpack_require__("../../../../../src/app/components/
 var collaboration_service_1 = __webpack_require__("../../../../../src/app/services/collaboration.service.ts");
 var navbar_component_1 = __webpack_require__("../../../../../src/app/components/navbar/navbar.component.ts");
 var input_service_1 = __webpack_require__("../../../../../src/app/services/input.service.ts");
+var search_pipe_1 = __webpack_require__("../../../../../src/app/pipes/search.pipe.ts");
 var AppModule = /** @class */ (function () {
     function AppModule() {
     }
@@ -110,7 +111,8 @@ var AppModule = /** @class */ (function () {
                 problem_detail_component_1.ProblemDetailComponent,
                 new_problem_component_1.NewProblemComponent,
                 editor_component_1.EditorComponent,
-                navbar_component_1.NavbarComponent
+                navbar_component_1.NavbarComponent,
+                search_pipe_1.SearchPipe
             ],
             imports: [
                 platform_browser_1.BrowserModule,
@@ -524,7 +526,7 @@ module.exports = module.exports.toString();
 /***/ "../../../../../src/app/components/problem-list/problem-list.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"container\">\n  <app-new-problem></app-new-problem>\n  <div class=\"list-group\">\n    <a class=\"list-group-item\" *ngFor=\"let problem of problems\" [routerLink] = \"['/problems', problem.id]\">\n      <span class=\"{{ 'pull-left label difficulty diff-' + problem.difficulty.toLocaleLowerCase() }}\">\n        {{ problem.difficulty }}\n      </span>\n      <strong class=\"title\">{{ problem.id }}. {{ problem.name }}</strong>\n    </a>\n  </div>\n</div>\n"
+module.exports = "<div class=\"container\">\n  <app-new-problem></app-new-problem>\n  <div class=\"list-group\">\n    <a class=\"list-group-item\" *ngFor=\"let problem of (problems | search: searchTerm)\" [routerLink]=\"['/problems', problem.id]\">\n      <span\n        class=\"{{'pull-left label difficulty diff-' + problem.difficulty.toLocaleLowerCase()}}\">\n          {{problem.difficulty}}\n      </span>\n      <strong class=\"title\">{{problem.id}}. {{problem.name}}</strong>\n    </a>\n  </div>\n</div>\n"
 
 /***/ }),
 
@@ -545,12 +547,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var core_1 = __webpack_require__("../../../core/esm5/core.js");
 var data_service_1 = __webpack_require__("../../../../../src/app/services/data.service.ts");
+var input_service_1 = __webpack_require__("../../../../../src/app/services/input.service.ts");
 var ProblemListComponent = /** @class */ (function () {
-    function ProblemListComponent(dataService) {
+    function ProblemListComponent(dataService, inputService) {
         this.dataService = dataService;
+        this.inputService = inputService;
+        this.searchTerm = '';
     }
     ProblemListComponent.prototype.ngOnInit = function () {
         this.getProblems();
+        this.getSearchTerm();
     };
     ProblemListComponent.prototype.ngOnDestroy = function () {
         this.subscriptionProblems.unsubscribe();
@@ -560,17 +566,54 @@ var ProblemListComponent = /** @class */ (function () {
         this.subscriptionProblems = this.dataService.getProblems()
             .subscribe(function (problems) { return _this.problems = problems; });
     };
+    ProblemListComponent.prototype.getSearchTerm = function () {
+        var _this = this;
+        this.subscriptionInput = this.inputService.getInput()
+            .subscribe(function (inputTerm) { return _this.searchTerm = inputTerm; });
+    };
     ProblemListComponent = __decorate([
         core_1.Component({
             selector: 'app-problem-list',
             template: __webpack_require__("../../../../../src/app/components/problem-list/problem-list.component.html"),
             styles: [__webpack_require__("../../../../../src/app/components/problem-list/problem-list.component.css")]
         }),
-        __metadata("design:paramtypes", [data_service_1.DataService])
+        __metadata("design:paramtypes", [data_service_1.DataService, input_service_1.InputService])
     ], ProblemListComponent);
     return ProblemListComponent;
 }());
 exports.ProblemListComponent = ProblemListComponent;
+
+
+/***/ }),
+
+/***/ "../../../../../src/app/pipes/search.pipe.ts":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var core_1 = __webpack_require__("../../../core/esm5/core.js");
+var SearchPipe = /** @class */ (function () {
+    function SearchPipe() {
+    }
+    SearchPipe.prototype.transform = function (problems, term) {
+        console.log(problems);
+        return problems.filter(function (problem) { return problem.name.toLowerCase().includes(term); });
+    };
+    SearchPipe = __decorate([
+        core_1.Pipe({
+            name: 'search'
+        })
+    ], SearchPipe);
+    return SearchPipe;
+}());
+exports.SearchPipe = SearchPipe;
 
 
 /***/ }),
