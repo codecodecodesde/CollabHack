@@ -36,14 +36,15 @@ export class EditorComponent implements OnInit {
       .subscribe(params => {
         this.sessionId = params['id'];
         this.initEditor();
-      })
+        this.collaboration.restoreBuffer();
+      });
   }
 
   initEditor(): void {
     this.editor = ace.edit("editor");
     this.editor.setTheme("ace/theme/eclipse");
     this.resetEditor();
-    
+
     //set up collaboration socket
     this.collaboration.init(this.editor, this.sessionId);
 
