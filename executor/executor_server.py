@@ -1,13 +1,13 @@
 import json
-from flask import flask
-app = Flask(_name_)
+from flask import Flask
+app = Flask(__name__)
 from flask import jsonify
 from flask import request
 
 import executor_utils as eu
 
 
-@app.route('/build_and_run', methods=['POST']);
+@app.route('/build_and_run', methods=['POST'])
 def build_and_run():
     data = request.get_json()
     if 'code' not in data or 'lang' not in data:

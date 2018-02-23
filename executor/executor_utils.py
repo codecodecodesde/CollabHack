@@ -8,7 +8,7 @@ from docker.errors import ContainerError
 from docker.errors import ImageNotFound
 
 CURRENT_DIR = os.path.dirname(os.path.relpath(__file__))
-IMAGE_NAME = ''#TODO:
+IMAGE_NAME = 'eringogogo/collabhack'
 
 client = docker.from_env()
 
@@ -16,18 +16,18 @@ TEMP_BUILD_DIR = "%s/tmp/" % CURRENT_DIR
 CONTAINER_NAME = "%s:latest" % IMAGE_NAME
 
 SOURCE_FILE_NAMES = {
-    "java": "Example.java",
+    "java": "Solution.java",
     "python": "example.py"
 }
 
-BINARY_FILE_NAME = {
-    "java": "Example",
+BINARY_NAMES = {
+    "java": "Solution",
     "python": "example.py"
 }
 
 BUILD_COMMANDS = {
     "java": "javac",
-    "python": "python3";
+    "python": "python3"
 }
 
 EXECUTE_COMMANDS = {
@@ -41,7 +41,7 @@ def load_image():
         print("Image exists locally")
     except ImageNotFound:
         print("Image not found locally, loading from docker hub")
-        client.pull(IMAGE_NAME)
+        client.images.pull(IMAGE_NAME)
     except APIError:
         print("Cannot connect to docker")
         return
@@ -54,42 +54,47 @@ def make_dir(dir):
         print("cannot create directory")
 
 
+
 def build_and_run(code, lang):
-    result = { 'build': None, 'run': None, 'error': None }
-    source_file_parent_dir_name = uuir.uuid4()
-    source_file_host_dir = "%s/%s" % (TEMP_BUILD_DIR, source_file_host_dir)
-    source_file_guest_dir = "test/%s" % (source_file_parent_dir_name)
+    result = {'build': None, 'run': None, 'error': None}
+    source_file_parent_dir_name = uuid.uuid4()
+    source_file_host_dir ="%s/%s" % (TEMP_BUILD_DIR, source_file_parent_dir_name)
+    source_file_guest_dir = "/test/%s" % (source_file_parent_dir_name)
+    make_dir(source_file_host_dir)
 
     with open("%s/%s" % (source_file_host_dir, SOURCE_FILE_NAMES[lang]), 'w') as source_file:
-        try:
-            client.container.run(
-                image = IMAGE_NAME,
-                command = "%s %s" % (BUILD_COMMANDS[lang], SOURCE_FILE_NAMES[lang])
-                volumes = {source_file_host_dir: {'bind': source_file_guest_dir, 'mode': 'rw'}},
-                working_dir = source_file_guest_dir
-            )
-            print("source build")
-            result['build'] = 'OK'
-        except ContainerError as e:
-            result['build'] = str(e.stderr, 'utf-8')
-            shutil.rmtree(source_file_host_dir)
-            return result
+        source_file.write(code)
 
-        try:
-            log = client.container.run(
-                image = IMAGE_NAME,
-                command = "%s %s" %s (EXECUTE_COMMANDS[lang], BINARY_FILE_NAME[lang])
-                volumes = {source_file_host_dir: {'bind': source_file_guest_dir, 'mode': 'rw'}}
-                working_dir = source_file_guest_dir
-            )
+    try:
+        client.containers.run(
+            image=IMAGE_NAME,
+            command="%s %s" % (BUILD_COMMANDS[lang], SOURCE_FILE_NAMES[lang]),
+            volumes={source_file_host_dir: {'bind': source_file_guest_dir, 'mode': 'rw'}},
+            working_dir=source_file_guest_dir
+        )
 
-            log = str(log, 'utf-8')
-            result['run'] = log
-        except ContainerError as e:
-            result['run'] = str(e.stderr, 'utf-8')
-            shutil.rmtree(source_file_host_dir)
-            return result
-
+        print("source built")
+        result['build'] = 'OK'
+    except ContainerError as e:
+        result['build'] = str(e.stderr, 'utf-8')
         shutil.rmtree(source_file_host_dir)
         return result
-        
+
+    try:
+        log = client.containers.run(
+            image=IMAGE_NAME,
+            command="%s %s" % (EXECUTE_COMMANDS[lang], BINARY_NAMES[lang]),
+            volumes={source_file_host_dir: {'bind': source_file_guest_dir, 'mode': 'rw'}},
+            working_dir=source_file_guest_dir
+        )
+
+        log = str(log, 'utf-8')
+        print(log)
+        result['run'] = log
+    except ContainerError as e:
+        result['run'] = str(e.stderr, 'utf-8')
+        shutil.rmtree(source_file_host_dir)
+        return result
+
+    shutil.rmtree(source_file_host_dir)
+    return result
