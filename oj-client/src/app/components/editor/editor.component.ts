@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import {CollaborationService } from '../../services/collaboration.service';
+import { CollaborationService } from '../../services/collaboration.service';
 import { ActivatedRoute, Params } from '@angular/router';
+import { DataService } from '../../services/data.service';
 
 declare var ace: any;//typescript requires defined type for object
 
@@ -14,8 +15,8 @@ export class EditorComponent implements OnInit {
   language: string = 'Java';
 
   sessionId: string;
-
   editor: any;
+  output: string = '';
 
   defaultContent = {
       'Java': ` public class Solution {
@@ -28,10 +29,9 @@ export class EditorComponent implements OnInit {
   };
 
   constructor(private collaboration: CollaborationService,
-              private route: ActivatedRoute) { }
+              private route: ActivatedRoute, private dataService: DataService) { }
 
   ngOnInit() {
-
     this.route.params
       .subscribe(params => {
         this.sessionId = params['id'];
@@ -73,6 +73,17 @@ export class EditorComponent implements OnInit {
   submit(): void {
     let user_code = this.editor.getValue();
     console.log(user_code);
+
+    const data = {
+      user_code: user_code,
+      lang: this.language.toLocaleLowerCase()
+    };
+
+    this.dataService.buildAndRun(data)
+      .then(res => {
+        this.output = res;
+        console.log(this.output);
+      });
   }
 
 }
